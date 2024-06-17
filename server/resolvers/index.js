@@ -1,11 +1,13 @@
 import fakeData from "../fakeData/index.js";
-import { AuthorModel, FolderModel } from "../models/index.js";
+import { AuthorModel, FolderModel, NoteModel } from "../models/index.js";
 
 export const resolvers = {
   Query: {
     folders: async (parent, args, context) => {
       const folders = await FolderModel.find({
         authorId: context.uid,
+      }).sort({
+        updatedAt: "desc",
       });
       console.log({ folders, context });
       return folders;
@@ -13,14 +15,14 @@ export const resolvers = {
     folder: async (parent, args) => {
       const folderId = args.folderId;
       console.log({ folderId });
-      const foundFolder = await FolderModel.findOne({
-        _id: folderId,
-      });
+      const foundFolder = await FolderModel.findById(folderId);
       return foundFolder;
     },
-    note: (parent, args) => {
+    note: async (parent, args) => {
       const noteId = args.noteId;
-      return fakeData.notes.find((note) => note.id === noteId);
+      const note = await NoteModel.findById(noteId);
+      return note;
+      //return fakeData.notes.find((note) => note.id === noteId);
     },
   },
   Folder: {
@@ -31,12 +33,22 @@ export const resolvers = {
       });
       return author;
     },
-    notes: (parent, args) => {
+    notes: async (parent, args) => {
       console.log({ parent });
-      return fakeData.notes.filter((note) => note.folderId === parent.id);
+      const notes = await NoteModel.find({
+        folderId: parent.id,
+      });
+      console.log({ notes });
+      return notes;
+      // return fakeData.notes.filter((note) => note.folderId === parent.id);
     },
   },
   Mutation: {
+    addNote: async (parent, args) => {
+      const newNote = new NoteModel(args);
+      await newNote.save();
+      return newNote;
+    },
     addFolder: async (parent, args, context) => {
       const newFolder = new FolderModel({ ...args, authorId: context.uid });
       console.log({ newFolder });

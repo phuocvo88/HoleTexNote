@@ -1,15 +1,52 @@
-import { Box, Card, CardContent, Grid, List, Typography } from "@mui/material";
-import React, { useState } from "react";
-import { Link, Outlet, useParams, useLoaderData } from "react-router-dom";
+import { NoteAddOutlined } from "@mui/icons-material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  IconButton,
+  List,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import {
+  Link,
+  Outlet,
+  useParams,
+  useLoaderData,
+  useSubmit,
+  useNavigate,
+} from "react-router-dom";
 
 export default function NoteList() {
-  const { noteId } = useParams();
+  const { noteId, folderId } = useParams();
   const [activeNoteId, setActiveNodeId] = useState(noteId);
   const { folder } = useLoaderData();
-  console.log("[Note List]", { folder });
+  const submit = useSubmit();
+  const navigate = useNavigate();
 
-  //const folder = { notes: [{ id: "1", content: "<p> This is new note </p>" }] };
+  console.log("[NoteLIST]", { folder });
 
+  useEffect(() => {
+    if (noteId) {
+      setActiveNodeId(noteId);
+      return;
+    }
+
+    if (folder?.notes?.[0]) {
+      navigate(`note/${folder.notes[0].id}`);
+    }
+  }, [noteId, folder.notes]);
+  const handleAddNewNote = () => {
+    submit(
+      {
+        content: "",
+        folderId,
+      },
+      { method: "post", action: `/folders/${folderId}` }
+    );
+  };
   return (
     <Grid container height="100%">
       <Grid
@@ -27,8 +64,19 @@ export default function NoteList() {
       >
         <List
           subheader={
-            <Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography sx={{ fontWeight: "bold" }}>Notes</Typography>
+              <Tooltip title="Add Note" onClick={handleAddNewNote}>
+                <IconButton size="small">
+                  <NoteAddOutlined />
+                </IconButton>
+              </Tooltip>
             </Box>
           }
         >
